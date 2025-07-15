@@ -32,11 +32,12 @@ function App() {
   const [cryptos, setCryptos] = useState<Crypto[] | null>(null);
   const [selected, setSelected] = useState<Crypto | null>();
   const [data, setData] = useState<ChartData<'line'>>();
+  const [range, setRange] = useState<number>(30); // Default to 30 days
   const [options, setOptions] = useState<ChartOptions<'line'>>({
     responsive: true,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display:false,
       },
       title: {
         display: true,
@@ -52,28 +53,44 @@ function App() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!selected) return;
+    axios.get(`https://api.coingecko.com/api/v3/coins/${selected?.id}/market_chart?vs_currency=usd&days=${range}&interval=daily`).then((response) => {
+      const prices = response.data.prices.map((price: [number, number]) => price[1]);
+      const labels = response.data.prices.map((price: [number, number]) => new Date(price[0]).toLocaleDateString());
+      setData({
+        labels,
+        datasets: [
+          {
+            label: `${selected?.name} Price`,
+            data: prices,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          },
+        ],
+      });
+      setOptions({ 
+        responsive: true,
+        plugins: {
+          legend: {
+            display:false,
+          },
+          title: {
+            display: true,
+            text: `${selected?.name} Price over last ` + range + (range === 1 ? ' Day.' : ' Days.'),
+          },
+        },
+      });
+    });
+  }, [selected, range]);
+
   return (
     <>
       <div className="App">
         <select
           onChange={(e) => {
             const c = cryptos?.find((x) => x.id === e.target.value);
-            setSelected(c);
-            axios.get(`https://api.coingecko.com/api/v3/coins/${c?.id}/market_chart?vs_currency=usd&days=30&interval=daily`).then((response) => {
-              const prices = response.data.prices.map((price: [number, number]) => price[1]);
-              const labels = response.data.prices.map((price: [number, number]) => new Date(price[0]).toLocaleDateString());
-              setData({
-                labels,
-                datasets: [
-                  {
-                    label: `${c?.name} Price`,
-                    data: prices,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                  },
-                ],
-              });
-            });
+            setSelected(c);            
           }}
           defaultValue="default"
         >
@@ -89,10 +106,16 @@ function App() {
             : null}
         </select>
       </div>
+      <select onChange={(e) => {
+           setRange(parseInt(e.target.value))
+        }}
+        >
+        <option value={30}>30 days</option>
+        <option value={7}>7 days</option>
+        <option value={1}>1 days</option>
+      </select>
       {selected ? <CryptoSummary crypto={selected} /> : null}
-      {data ? <div style={{ width: 600}}
-              ><Line key={JSON.stringify(data)} options={options} data={data} /></div> 
-              : null}
+      {data ? <Line key={JSON.stringify(data)} options={options} data={data} /> : null}
     </>
   );
 }
