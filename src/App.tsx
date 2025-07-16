@@ -30,9 +30,11 @@ ChartJS.register(
 
 function App() {
   const [cryptos, setCryptos] = useState<Crypto[] | null>(null);
-  const [selected, setSelected] = useState<Crypto | null>();
-  const [data, setData] = useState<ChartData<'line'>>();
+  const [selected, setSelected] = useState<Crypto[]>([]);  
   const [range, setRange] = useState<number>(30); // Default to 30 days
+
+  /*
+  const [data, setData] = useState<ChartData<'line'>>();
   const [options, setOptions] = useState<ChartOptions<'line'>>({
     responsive: true,
     plugins: {
@@ -45,6 +47,7 @@ function App() {
       },
     },
   });
+  */
 
   useEffect(() => {
     const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false';
@@ -53,6 +56,7 @@ function App() {
     });
   }, []);
 
+  /*
   useEffect(() => {
     if (!selected) return;
     axios.get(`https://api.coingecko.com/api/v3/coins/${selected?.id}/market_chart?vs_currency=usd&days=${range}&interval=daily`).then((response) => {
@@ -83,14 +87,15 @@ function App() {
       });
     });
   }, [selected, range]);
+  */
 
   return (
     <>
       <div className="App">
         <select
           onChange={(e) => {
-            const c = cryptos?.find((x) => x.id === e.target.value);
-            setSelected(c);            
+            const c = cryptos?.find((x) => x.id === e.target.value) as Crypto;
+            setSelected([...selected,c]);            
           }}
           defaultValue="default"
         >
@@ -105,17 +110,12 @@ function App() {
             })
             : null}
         </select>
-      </div>
-      <select onChange={(e) => {
-           setRange(parseInt(e.target.value))
-        }}
-        >
-        <option value={30}>30 days</option>
-        <option value={7}>7 days</option>
-        <option value={1}>1 days</option>
-      </select>
-      {selected ? <CryptoSummary crypto={selected} /> : null}
-      {data ? <Line key={JSON.stringify(data)} options={options} data={data} /> : null}
+      </div>      
+
+      {selected.map((s) => {return <CryptoSummary crypto={s} />})}
+
+      {/*selected ? <CryptoSummary crypto={selected} /> : null*/}
+      {/*data ? <Line key={JSON.stringify(data)} options={options} data={data} /> : null */}
     </>
   );
 }
