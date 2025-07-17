@@ -89,6 +89,20 @@ function App() {
   }, [selected, range]);
   */
 
+  useEffect(() => {
+    console.log('Selected cryptos:', selected); 
+  }, [selected]);
+
+  function updatedOwned(crypto: Crypto, amount: number) : void {
+      console.log('updatedOwned', crypto, amount);
+      let temp = [...selected];
+      let tempObj = temp.find((x) => x.id === crypto.id);
+      if(tempObj) {
+        tempObj.owned = amount;
+        setSelected(temp);
+      }
+  }
+
   return (
     <>
       <div className="App">
@@ -112,10 +126,15 @@ function App() {
         </select>
       </div>      
 
-      {selected.map((s) => {return <CryptoSummary crypto={s} />})}
+      {selected.map((s) => {return <CryptoSummary crypto={s} updatedOwned={updatedOwned} />})}
 
       {/*selected ? <CryptoSummary crypto={selected} /> : null*/}
       {/*data ? <Line key={JSON.stringify(data)} options={options} data={data} /> : null */}
+      {selected 
+        ? 'Your portfolio is worth: $' +
+        selected.map((s) => { 
+          if(isNaN(s.owned)) { return 0 ;} return s.current_price * s.owned }).reduce((prev, current) => {return prev + current;}, 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits : 2})
+        : null}
     </>
   );
 }

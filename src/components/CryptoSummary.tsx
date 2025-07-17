@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 
 export type AppProps = {
     crypto: Crypto;
+    updatedOwned: (crypto: Crypto, amount: number) => void;
 }
 
-export default function CryptoSummary({crypto}: AppProps) : JSX.Element {
+export default function CryptoSummary({crypto, updatedOwned}: AppProps) : JSX.Element {
 
     useEffect(() => {});
 
-    const [amount, setAmount] = useState<string>('0');
+    const [amount, setAmount] = useState<number>(0);
     return (
         <div>
         <span>{crypto.name + ' $' + crypto.current_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits : 2})}</span>
@@ -18,9 +19,12 @@ export default function CryptoSummary({crypto}: AppProps) : JSX.Element {
             type="number"
             style={{margin: 10}} 
             value={amount} 
-            onChange={(e) => {setAmount(e.target.value)}} >
+            onChange={(e) => {
+                    setAmount(parseFloat(e.target.value))
+                    updatedOwned(crypto, parseFloat(e.target.value));
+                }} >
         </input>
-        <p>${(crypto.current_price * parseFloat(amount)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits : 2})}</p>
+        <p>{isNaN(amount) ? '$0.00' : '$' + (crypto.current_price * amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits : 2})}</p>
         </div>        
     );
 }
